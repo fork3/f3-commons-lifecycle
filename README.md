@@ -80,7 +80,7 @@ Bar created!
 ## DI and other stuff in startup
 ```java
 public class DIStartModule extends StartModule<StartLevel> {
-	public ExtendedStartupModule(StartLevel startLevel, Class<?> clazz) {
+	public DIStartModule(StartLevel startLevel, Class<?> clazz) {
 		super(startLevel, clazz);
 	}
 	
