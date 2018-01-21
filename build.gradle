@@ -1,0 +1,42 @@
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'maven-publish'
+
+version = '1.0'
+group = 'fork3'
+
+repositories {
+	jcenter()
+	maven { url 'https://raw.githubusercontent.com/fork3/mvn-repo/master' }
+}
+
+dependencies {
+	compile 'org.projectlombok:lombok:1.16.10'
+	compile 'org.slf4j:slf4j-api:1.7.12'
+	testCompile 'junit:junit:4.12'
+	
+	compile group: 'fork3', name: 'f3-commons-classpath', version: '1.0'
+	compile group: 'fork3', name: 'f3-commons-reflection', version: '1.0'
+}
+
+task sourceJar(type: Jar) {
+	from sourceSets.main.allJava
+}
+
+publishing {
+	publications {
+		mavenJava(MavenPublication) { 
+			from components.java
+			
+			artifact sourceJar {
+				classifier "sources"
+			}
+		}
+	}
+}
+
+publishing {
+	repositories {
+		maven { url 'build/repository' }
+	}
+}
