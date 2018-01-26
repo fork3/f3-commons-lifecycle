@@ -32,7 +32,8 @@ import f3.commons.lifecycle.startup.StartupManager;
 public class MethodInvoke {
 	
 	public static enum StartLevel {
-		Level
+		First,
+		Second
 	}
 	
 	public static interface Interface {
@@ -56,9 +57,18 @@ public class MethodInvoke {
 	
 	public static class SomeFactory {
 		
-		@Startup("Level")
+		@Startup("First")
 		public static Interface create() {
 			return new InterfaceImpl("some value");
+		}
+		
+	}
+	
+	public static class SomeLoader {
+		
+		@Startup("Second")
+		public static void loadProcess() {
+			InterfaceImpl i = new InterfaceImpl("other value");
 		}
 		
 	}
@@ -67,9 +77,12 @@ public class MethodInvoke {
 	@Test
 	public void testMethodInvoke() {
 		StartupInstance<StartLevel> si = StartupManager.createStartup();
-		StartupManager.configureStartupReflection(IStartModuleFactory.getDefaultFactory(), si, Arrays.asList(SomeFactory.class), StartLevel.class);
-		si.runLevel(StartLevel.Level);
+		StartupManager.configureStartupReflection(IStartModuleFactory.getDefaultFactory(), si, Arrays.asList(SomeFactory.class, SomeLoader.class), StartLevel.class);
+		si.runLevel(StartLevel.First);
 		Assert.assertEquals("some value", InterfaceImpl.instance.doLogic());
+		
+		si.runLevel(StartLevel.Second);
+		Assert.assertEquals("other value", InterfaceImpl.instance.doLogic());
 	}
 	
 	

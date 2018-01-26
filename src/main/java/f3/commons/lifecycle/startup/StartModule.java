@@ -83,11 +83,9 @@ public class StartModule<StartLevel extends Enum<StartLevel>> {
 			try {
 				instance = method.invoke(null);
 			} catch (ReflectiveOperationException e) {
-			}
-			
-			if(instance == null) {
 				log.warn("Failed to invoke {} in {}", method.getName(), clazz.getCanonicalName());
 			}
+			
 			return;
 		}
 		
