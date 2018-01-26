@@ -15,11 +15,14 @@
  */
 package f3.commons.lifecycle.startup;
 
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.Optional;
 
+import f3.commons.reflection.MethodUtils;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -53,14 +56,31 @@ public class StartupManager {
 		int count = 0;
 		try {
 			for(Class<?> clazz : classes) {
-				final Startup startup = clazz.getAnnotation(Startup.class);
-				if(startup == null)
+				final int mod = clazz.getModifiers();
+				if(Modifier.isAbstract(mod) || Modifier.isInterface(mod)) {
 					continue;
+				}
 				
-				final SL key;
-				try {
-					key = Enum.valueOf(sl, startup.value());
-				} catch(Throwable e) {
+				Startup startup = clazz.getAnnotation(Startup.class);
+				if(startup == null) {
+					final List<Method> methods = MethodUtils.getAnnotatedMethods(clazz, Startup.class);
+					for(Method method : methods) {
+						startup = method.getAnnotation(Startup.class);
+						final SL key = getKey(sl, startup);
+						if(key == null) {
+							continue;
+						}
+						
+						final StartModule<SL> module = startModuleFactory.create(key, clazz, method);
+						startupInstance.put(key, module);
+						count++;
+					}
+					
+					continue;
+				}
+				
+				final SL key = getKey(sl, startup);
+				if(key == null) {
 					continue;
 				}
 				
@@ -74,7 +94,7 @@ public class StartupManager {
 				final List<StartModule<SL>> modules = entry.getValue();
 				for(StartModule<SL> module : modules) {
 					final Class<?> clazz = module.getClazz();
-					final Class<?>[] dependency = clazz.getAnnotation(Startup.class).dependency();
+					final Class<?>[] dependency = module.getAnnotation().dependency();
 					for(Class<?> dep : dependency) {
 						final Optional<StartModule<SL>> dependencyModule = modules.stream()
 								.filter(m -> m.getClazz().getCanonicalName().equals(dep.getCanonicalName()))
@@ -99,5 +119,13 @@ public class StartupManager {
 			throw new RuntimeException("Failed load startups!", e);
 		}
 		return count;
+	}
+	
+	private static <StartLevel extends Enum<StartLevel>> StartLevel getKey(Class<StartLevel> sl, Startup startup) {
+		try {
+			return Enum.valueOf(sl, startup.value());
+		} catch(Throwable e) {
+			return null;
+		}
 	}
 }

@@ -29,7 +29,7 @@ import java.lang.annotation.Target;
  * @author n3k0nation
  *
  */
-@Target(ElementType.METHOD)
+@Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Shutdown {
 

@@ -15,10 +15,29 @@
  */
 package f3.commons.lifecycle.startup;
 
+import java.lang.reflect.Method;
+
 /**
  * @author n3k0nation
  *
  */
 public interface IStartModuleFactory<StartLevel extends Enum<StartLevel>> {
+	final static IStartModuleFactory<?> defaultFactory = new IStartModuleFactory() {
+		@Override
+		public StartModule create(Enum sl, Class target) {
+			return new StartModule<>(sl, target);
+		}
+		
+		@Override
+		public StartModule create(Enum sl, Class target, Method method) {
+			return new StartModule<>(sl, target, method);
+		}
+	};
+	
+	static <StartLevel extends Enum<StartLevel>> IStartModuleFactory<StartLevel> getDefaultFactory() {
+		return (IStartModuleFactory<StartLevel>) defaultFactory;
+	}
+	
 	StartModule<StartLevel> create(StartLevel sl, Class<?> target);
+	StartModule<StartLevel> create(StartLevel sl, Class<?> target, Method method);
 }

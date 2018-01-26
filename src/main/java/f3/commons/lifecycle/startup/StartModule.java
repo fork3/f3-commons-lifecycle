@@ -16,6 +16,7 @@
 package f3.commons.lifecycle.startup;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,18 +35,31 @@ public class StartModule<StartLevel extends Enum<StartLevel>> {
 	
 	@Getter private final StartLevel startLevel;
 	@Getter private final Class<?> clazz;
-	@Getter private boolean isLast;
-	@Getter private boolean isPurge;
-	@Getter private boolean isSingleton;
+	@Getter private final Method method;
+	@Getter private final Startup annotation;
 	@Getter @Setter(AccessLevel.PROTECTED) private Object instance;
 	
 	public StartModule(StartLevel startLevel, Class<?> clazz) {
+		this(startLevel, clazz, null);
+	}
+	
+	public StartModule(StartLevel startLevel, Class<?> clazz, Method method) {
 		this.startLevel = startLevel;
 		this.clazz = clazz;
-		Startup ann = clazz.getAnnotation(Startup.class);
-		isLast = ann.last();
-		isPurge = ann.purge();
-		isSingleton = ann.singleton();
+		this.method = method;
+		annotation = method != null ? method.getAnnotation(Startup.class) : clazz.getAnnotation(Startup.class);
+	}
+	
+	public boolean isLast() {
+		return annotation.last();
+	}
+	
+	public boolean isPurge() {
+		return annotation.purge();
+	}
+	
+	public boolean isSingleton() {
+		return annotation.singleton();
 	}
 	
 	public void addDependency(StartModule<StartLevel> module) {
@@ -65,7 +79,19 @@ public class StartModule<StartLevel extends Enum<StartLevel>> {
 			depend.init();
 		}
 		
-		if(isSingleton) {
+		if(Modifier.isStatic(method.getModifiers())) {
+			try {
+				instance = method.invoke(null);
+			} catch (ReflectiveOperationException e) {
+			}
+			
+			if(instance == null) {
+				log.warn("Failed to invoke {} in {}", method.getName(), clazz.getCanonicalName());
+			}
+			return;
+		}
+		
+		if(isSingleton()) {
 			Method method;
 			try {
 				method = clazz.getDeclaredMethod("getInstance");

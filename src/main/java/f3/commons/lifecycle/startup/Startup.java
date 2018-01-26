@@ -34,10 +34,12 @@ import java.lang.annotation.Target;
  * Важно не наебаться, так как в марке используется String-значение имени элемента из enum'а и если оно 
  *  не будет найдено, то загрузка не произойдет!
  * 
+ * @version 1.0.1 Supports static methods invocation.
+ * 
  * @author n3k0nation
  *
  */
-@Target(ElementType.TYPE)
+@Target({ElementType.TYPE, ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Startup {
 	/** Startup level */
